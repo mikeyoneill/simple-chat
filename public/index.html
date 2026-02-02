@@ -1,22 +1,61 @@
-<script>
-  async function send() {
-    const text = document.getElementById("input").value;
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
-    });
-
-    const output = document.getElementById("output");
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      output.textContent = "Server error:\n" + errorText;
-      return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
     }
+    input {
+      width: 80%;
+      padding: 8px;
+      font-size: 16px;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-left: 5px;
+    }
+    pre {
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
 
-    const data = await res.json();
-    output.textContent = data.reply;
-  }
-</script>
+  <h2>Chat</h2>
+
+  <input id="input" placeholder="Type a message" />
+  <button onclick="send()">Send</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    async function send() {
+      const text = document.getElementById("input").value;
+      const output = document.getElementById("output");
+
+      output.textContent = "Thinking...";
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        output.textContent = "Server error:\n" + err;
+        return;
+      }
+
+      const data = await res.json();
+      output.textContent = data.reply;
+    }
+  </script>
+
+</body>
+</html>
