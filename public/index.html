@@ -1,28 +1,22 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Simple Chat</title>
-</head>
-<body>
-  <h2>Chat</h2>
+<script>
+  async function send() {
+    const text = document.getElementById("input").value;
 
-  <input id="input" placeholder="Type a message">
-  <button onclick="send()">Send</button>
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
 
-  <pre id="output"></pre>
+    const output = document.getElementById("output");
 
-  <script>
-    async function send() {
-      const text = document.getElementById("input").value;
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
-      const data = await res.json();
-      document.getElementById("output").textContent = data.reply;
+    if (!res.ok) {
+      const errorText = await res.text();
+      output.textContent = "Server error:\n" + errorText;
+      return;
     }
-  </script>
-</body>
-</html>
+
+    const data = await res.json();
+    output.textContent = data.reply;
+  }
+</script>
