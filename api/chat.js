@@ -1,47 +1,51 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
+  res.setHeader("Content-Type", "application/json");
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
+    const { message } = req.body || {};
+
+    if (!message) {
+      return res.status(400).json({ error: "No message provided" });
     }
 
-    const { message } = req.body;
+    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: "You are a friendly assistant." },
+          { role: "user", content: message }
+        ]
+      })
+    });
 
-    const openaiRes = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          messages: [
-            { role: "system", content: "You are a friendly assistant." },
-            { role: "user", content: message },
-          ],
-        }),
-      }
-    );
+    const text = await openaiRes.text();
 
-    const data = await openaiRes.json();
-
-    if (!data.choices) {
+    if (!openaiRes.ok) {
       return res.status(500).json({
         error: "OpenAI error",
-        details: data,
+        raw: text
       });
     }
 
+    const data = JSON.parse(text);
+
     return res.status(200).json({
-      reply: data.choices[0].message.content,
+      reply: data.choices[0].message.content
     });
+
   } catch (err) {
     return res.status(500).json({
       error: "Server crashed",
-      details: err.message,
+      message: err.message
     });
   }
 }
